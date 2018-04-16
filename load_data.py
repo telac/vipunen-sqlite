@@ -12,8 +12,8 @@ class APIConnector(object):
         return metadata.json()
 
     def get_data(self, content):
-        data = requests.get(self.resources_url + '/' + content + '/data')
-        return data.json()
+        with requests.get(self.resources_url + '/' + content + '/data', stream=True) as data:
+            return data.json()
 
     def get_resources(self):
         resources = requests.get(self.resources_url)
@@ -36,4 +36,5 @@ class APIConnector(object):
 if __name__ == '__main__':
     AC = APIConnector()
     AC.start_parse()
+
 

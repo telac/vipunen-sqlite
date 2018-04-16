@@ -51,3 +51,4 @@ class DatabaseConnector(object):
             self.cursor.execute(insert_cmd, values)
             values = []
         self.connection.commit()
+
