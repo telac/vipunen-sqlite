@@ -2,6 +2,7 @@ import sqlite3
 import ijson
 from decimal import Decimal
 
+
 class DatabaseConnector(object):
 
     def __init__(self, name, data, meta):
@@ -19,7 +20,7 @@ class DatabaseConnector(object):
         sql_cmd = ("""CREATE TABLE IF NOT EXISTS {} (uid INTEGER PRIMARY KEY, """.format(self.name))
         self.variables.append('?')
         attributes = []
-        replace_list = [(':', '_'), ('-', '_'), (',','_'), ('(', '_'), (')', '_')]
+        replace_list = [(':', '_'), ('-', '_'), (',','_'), ('(', '_'), (')', '_'), ('.', '_')]
         for column in self.meta:
             name = column['name']
             for r in replace_list:
@@ -44,6 +45,7 @@ class DatabaseConnector(object):
         # 'INSERT INTO avoin_yliopisto VALUES (?, ?, ?, ?, ?, ?)'
         insert_cmd = 'INSERT INTO {} VALUES ({});'.format(self.name, variables)
         values = []
+        # streams the http request
         objects = ijson.items(self.response, "item")
         for index, row in enumerate(objects):
             values.append(index)

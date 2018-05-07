@@ -3,6 +3,7 @@ from urllib.request import urlopen
 import database_connector
 import json
 
+
 class APIConnector(object):
 
     def __init__(self):
@@ -14,8 +15,9 @@ class APIConnector(object):
 
     def get_data(self, content):
         URI = self.resources_url + '/' + content + '/data'
+        # the data is given as a response, instead of JSON due to
+        # memory restrictions
         return urlopen(URI)
-
 
     def get_resources(self):
         resources = requests.get(self.resources_url)
