@@ -1,10 +1,12 @@
 import sqlite3
+import ijson
+from decimal import Decimal
 
 class DatabaseConnector(object):
 
     def __init__(self, name, data, meta):
         self.name = name
-        self.data = data
+        self.response = data
         self.meta = meta
         self.variables = []
         self.database = 'vipunen.db'
@@ -17,7 +19,6 @@ class DatabaseConnector(object):
         sql_cmd = ("""CREATE TABLE IF NOT EXISTS {} (uid INTEGER PRIMARY KEY, """.format(self.name))
         self.variables.append('?')
         attributes = []
-        # well this is pretty dumb.
         replace_list = [(':', '_'), ('-', '_'), (',','_'), ('(', '_'), (')', '_')]
         for column in self.meta:
             name = column['name']
@@ -25,7 +26,7 @@ class DatabaseConnector(object):
                 name = name.replace(*r)
             type_ = column['type']
             if type_ == 'number':
-                type_ = 'INTEGER'
+                type_ = 'TEXT'
             else:
                 type_ = 'TEXT'
             attributes.append(name + ' ' + type_)
@@ -42,13 +43,15 @@ class DatabaseConnector(object):
         # result could look like e.g.
         # 'INSERT INTO avoin_yliopisto VALUES (?, ?, ?, ?, ?, ?)'
         insert_cmd = 'INSERT INTO {} VALUES ({});'.format(self.name, variables)
-        print(insert_cmd)
         values = []
-        for index, row in enumerate(self.data):
+        objects = ijson.items(self.response, "item")
+        for index, row in enumerate(objects):
             values.append(index)
             for key in row:
-                values.append(row[key])
+                value = row[key]
+                if type(value) == Decimal:
+                    value = float(value)
+                values.append(value)
             self.cursor.execute(insert_cmd, values)
             values = []
         self.connection.commit()
-

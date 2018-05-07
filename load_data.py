@@ -1,4 +1,5 @@
 import requests
+from urllib.request import urlopen
 import database_connector
 import json
 
@@ -12,8 +13,9 @@ class APIConnector(object):
         return metadata.json()
 
     def get_data(self, content):
-        with requests.get(self.resources_url + '/' + content + '/data', stream=True) as data:
-            return data.json()
+        URI = self.resources_url + '/' + content + '/data'
+        return urlopen(URI)
+
 
     def get_resources(self):
         resources = requests.get(self.resources_url)
