@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sqlite3
 import ijson
 from decimal import Decimal
@@ -5,12 +6,12 @@ from decimal import Decimal
 
 class DatabaseConnector(object):
 
-    def __init__(self, name, data, meta):
+    def __init__(self, name, response, meta):
         self.name = name
-        self.response = data
+        self.response = response
         self.meta = meta
         self.variables = []
-        self.database = 'vipunen.db'
+        self.database = 'vipunen_test.db'
         self.connection = sqlite3.connect(self.database)
         self.cursor = self.connection.cursor()
 
@@ -26,6 +27,10 @@ class DatabaseConnector(object):
             for r in replace_list:
                 name = name.replace(*r)
             type_ = column['type']
+            # there are some really interesting number formats
+            # in some of the files. Feel free to decipher those formats
+            # and deal with them accordingly. Vipunen doesn't give any more
+            # metadata other than "number"
             if type_ == 'number':
                 type_ = 'TEXT'
             else:
@@ -35,9 +40,9 @@ class DatabaseConnector(object):
 
         attributes_ = ', '.join(attributes)
         sql_cmd += """{});""".format(attributes_)
-        print(sql_cmd)
         self.cursor.execute(sql_cmd)
         self.connection.commit()
+        print("created table " + self.name)
 
     def insert_data(self):
         variables = ','.join(self.variables)
@@ -57,4 +62,4 @@ class DatabaseConnector(object):
             self.cursor.execute(insert_cmd, values)
             values = []
         self.connection.commit()
-
+        print("inserted all data to table " + self.name)

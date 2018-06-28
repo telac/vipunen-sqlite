@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
 import requests
 from urllib.request import urlopen
+from urllib.error import HTTPError
 import database_connector
 import json
 
@@ -35,10 +37,11 @@ class APIConnector(object):
             except json.JSONDecodeError:
                 print("corrupt json: " + x + " \nmoving on to next file")
                 pass
+            except HTTPError as e:
+                print("got error response" + e.msg)
+                pass
 
 
 if __name__ == '__main__':
     AC = APIConnector()
     AC.start_parse()
-
-
