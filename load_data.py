@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import requests
+from time import sleep
 from urllib.error import HTTPError
 import database_connector
 import json
@@ -17,8 +18,16 @@ class APIConnector(object):
 
     def get_data(self, content, offset, limit):
         URI = self.resources_url + '/' + content + '/data?' + 'offset=' + str(offset) + '&limit=' + str(limit)
-        data = requests.get(URI, headers=self.headers)
-        return data.json()
+        r = requests.get(URI, headers=self.headers)
+        retries = 0
+        while r.status_code != 200:
+            sleep(10)
+            r = requests.get(URI, headers=self.headers)
+            retries += 1
+            if retries > 15:
+                print("failed request after 15 retries")
+                break
+        return r.json()
 
     def get_resources(self):
         resources = requests.get(self.resources_url, headers=self.headers)
@@ -39,7 +48,7 @@ class APIConnector(object):
                 print("inserted all data to table " + dataset)
 
             except json.JSONDecodeError:
-                print("corrupt json: " + x + " \nmoving on to next file")
+                print("corrupt json: " + dataset + " \nmoving on to next file")
                 pass
 
             except HTTPError as e:
