@@ -25,7 +25,7 @@ class APIConnector(object):
             r = requests.get(URI, headers=self.headers)
             retries += 1
             if retries > 15:
-                print("failed request after 15 retries")
+                print("failed request after " + str(retries + 1) + " retries")
                 break
         return r.json()
 
