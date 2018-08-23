@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 import sqlite3
-import ijson
 from decimal import Decimal
 
 
 class DatabaseConnector(object):
 
-    def __init__(self, name, response, meta):
+    def __init__(self, name, meta):
         self.name = name
-        self.response = response
         self.meta = meta
         self.variables = []
-        self.database = 'vipunen_test.db'
+        self.database = 'vipunen.db'
         self.connection = sqlite3.connect(self.database)
         self.cursor = self.connection.cursor()
 
@@ -32,7 +30,7 @@ class DatabaseConnector(object):
             # and deal with them accordingly. Vipunen doesn't give any more
             # metadata other than "number"
             if type_ == 'number':
-                type_ = 'TEXT'
+                type_ = 'NUMERIC'
             else:
                 type_ = 'TEXT'
             attributes.append(name + ' ' + type_)
@@ -44,16 +42,15 @@ class DatabaseConnector(object):
         self.connection.commit()
         print("created table " + self.name)
 
-    def insert_data(self):
+    def insert_data(self, data, offset):
         variables = ','.join(self.variables)
         # result could look like e.g.
         # 'INSERT INTO avoin_yliopisto VALUES (?, ?, ?, ?, ?, ?)'
-        insert_cmd = 'INSERT INTO {} VALUES ({});'.format(self.name, variables)
+        insert_cmd = 'INSERT OR IGNORE INTO {} VALUES ({});'.format(self.name, variables)
         values = []
-        # streams the http request
-        objects = ijson.items(self.response, "item")
-        for index, row in enumerate(objects):
-            values.append(index)
+        for row in data:
+            values.append(offset)
+            offset += 1
             for key in row:
                 value = row[key]
                 if type(value) == Decimal:
@@ -62,4 +59,3 @@ class DatabaseConnector(object):
             self.cursor.execute(insert_cmd, values)
             values = []
         self.connection.commit()
-        print("inserted all data to table " + self.name)

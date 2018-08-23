@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import requests
-from urllib.request import urlopen
 from urllib.error import HTTPError
 import database_connector
 import json
@@ -10,33 +9,39 @@ class APIConnector(object):
 
     def __init__(self):
         self.resources_url = 'http://api.vipunen.fi/api/resources'
+        self.headers = {'Accept': 'application/json'}
 
     def get_metadata(self, content):
-        metadata = requests.get(self.resources_url + '/' + content)
+        metadata = requests.get(self.resources_url + '/' + content, headers=self.headers)
         return metadata.json()
 
-    def get_data(self, content):
-        URI = self.resources_url + '/' + content + '/data'
-        # the data is given as a response, instead of JSON due to
-        # memory restrictions
-        return urlopen(URI)
+    def get_data(self, content, offset, limit):
+        URI = self.resources_url + '/' + content + '/data?' + 'offset=' + str(offset) + '&limit=' + str(limit)
+        data = requests.get(URI, headers=self.headers)
+        return data.json()
 
     def get_resources(self):
-        resources = requests.get(self.resources_url)
+        resources = requests.get(self.resources_url, headers=self.headers)
         return resources.json()
 
     def start_parse(self):
-        for x in self.get_resources():
+        for dataset in self.get_resources():
             try:
-                meta = self.get_metadata(x)
-                data = self.get_data(x)
-                connector = database_connector.DatabaseConnector(x, data, meta)
+                meta = self.get_metadata(dataset)
+                connector = database_connector.DatabaseConnector(dataset, meta)
                 connector.create_schema()
-                connector.insert_data()
+                offset, limit = 0, 10000
+                data = self.get_data(dataset, offset, limit)
+                while data:
+                    connector.insert_data(data, offset)
+                    offset += limit
+                    data = self.get_data(dataset, offset, limit)
+                print("inserted all data to table " + dataset)
 
             except json.JSONDecodeError:
                 print("corrupt json: " + x + " \nmoving on to next file")
                 pass
+
             except HTTPError as e:
                 print("got error response" + e.msg)
                 pass
