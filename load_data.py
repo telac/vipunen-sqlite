@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import requests
 from time import sleep
-from urllib.error import HTTPError
 import database_connector
 import json
 
@@ -21,6 +20,9 @@ class APIConnector(object):
         r = requests.get(URI, headers=self.headers)
         retries = 0
         while r.status_code != 200:
+            if r.status_code != 502:
+                # ignores inserting data entirely and skips to next dataset
+                return None
             sleep(10)
             r = requests.get(URI, headers=self.headers)
             retries += 1
@@ -45,14 +47,22 @@ class APIConnector(object):
                     connector.insert_data(data, offset)
                     offset += limit
                     data = self.get_data(dataset, offset, limit)
-                print("inserted all data to table " + dataset)
+                print("inserted all available data to table " + dataset)
 
             except json.JSONDecodeError:
                 print("corrupt json: " + dataset + " \nmoving on to next file")
                 pass
 
-            except HTTPError as e:
-                print("got error response" + e.msg)
+            except requests.ConnectionError as e:
+                print("Could not connect to the host. Dataset: " + dataset)
+                print(e)
+                print("ignoring dataset")
+                pass
+
+            except requests.HTTPError as e:
+                print("HTTP error. Dataset " + dataset)
+                print(e)
+                print("ignoring dataset")
                 pass
 
 
