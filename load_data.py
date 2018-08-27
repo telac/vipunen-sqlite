@@ -20,7 +20,7 @@ class APIConnector(object):
         r = requests.get(URI, headers=self.headers)
         retries = 0
         while r.status_code != 200:
-            if r.status_code != 502:
+            if r.status_code == 502:
                 # ignores inserting data entirely and skips to next dataset
                 return None
             sleep(10)
